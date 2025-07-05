@@ -1,8 +1,11 @@
 "use client";
 import React from "react";
+import { useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs"; // ✅ Change this line if you're using a different auth provider
 
 function MainComponent() {
-  const { data: user, loading: userLoading } = useUser();
+  const { data: user, isLoading: userLoading } = useUser(); // Also fixed: useUser returns `isLoading`
+
   const [issues, setIssues] = useState([]);
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,7 +17,6 @@ function MainComponent() {
     CRITICAL: 0,
   });
 
-  // Fetch user role and issues
   useEffect(() => {
     if (user) {
       fetchUserRole();
@@ -35,7 +37,7 @@ function MainComponent() {
       setUserRole(data.role || "REPORTER");
     } catch (err) {
       console.error("Error fetching user role:", err);
-      setUserRole("REPORTER"); // Default role
+      setUserRole("REPORTER");
     }
   };
 
@@ -180,62 +182,43 @@ function MainComponent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Dashboard Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <i className="fas fa-exclamation-triangle text-red-600"></i>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  Critical Issues
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.CRITICAL}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <i className="fas fa-exclamation-circle text-orange-600"></i>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  High Priority
-                </p>
-                <p className="text-2xl font-bold text-gray-900">{stats.HIGH}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <i className="fas fa-minus-circle text-yellow-600"></i>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  Medium Priority
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.MEDIUM}
-                </p>
+          {["CRITICAL", "HIGH", "MEDIUM", "LOW"].map((level) => (
+            <div key={level} className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <div
+                  className={`p-2 rounded-lg ${
+                    level === "CRITICAL"
+                      ? "bg-red-100"
+                      : level === "HIGH"
+                      ? "bg-orange-100"
+                      : level === "MEDIUM"
+                      ? "bg-yellow-100"
+                      : "bg-green-100"
+                  }`}
+                >
+                  <i
+                    className={`fas ${
+                      level === "CRITICAL"
+                        ? "fa-exclamation-triangle text-red-600"
+                        : level === "HIGH"
+                        ? "fa-exclamation-circle text-orange-600"
+                        : level === "MEDIUM"
+                        ? "fa-minus-circle text-yellow-600"
+                        : "fa-check-circle text-green-600"
+                    }`}
+                  ></i>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">
+                    {level.charAt(0) + level.slice(1).toLowerCase()} Priority
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats[level]}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <i className="fas fa-check-circle text-green-600"></i>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  Low Priority
-                </p>
-                <p className="text-2xl font-bold text-gray-900">{stats.LOW}</p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Issues List */}
